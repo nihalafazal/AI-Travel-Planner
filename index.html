@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Idea Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✈️ AI Travel Idea Generator</h1>
+            <p>Plan your perfect trip with the power of AI</p>
+        </header>
+
+        <main>
+            <div class="form-card">
+                <form id="travelForm">
+                    <div class="form-group">
+                        <label for="budget">Budget Level:</label>
+                        <select id="budget" name="budget" required>
+                            <option value="Low">Low - Budget friendly</option>
+                            <option value="Medium" selected>Medium - Comfortable</option>
+                            <option value="High">High - Luxury getaway</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="days">Travel Days:</label>
+                        <input type="number" id="days" name="days" value="3" min="1" max="30" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="type">Destination Type:</label>
+                        <select id="type" name="type" required>
+                            <option value="beach">🏖️ Beach</option>
+                            <option value="city">🏙️ City</option>
+                            <option value="mountains">⛰️ Mountains</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" id="submitBtn">
+                        <span class="btn-text">Generate Trip Ideas ✨</span>
+                        <div class="loader" style="display: none;"></div>
+                    </button>
+                </form>
+            </div>
+
+            <div id="results" class="results-card" style="display: none;">
+                <!-- Results will be injected here -->
+            </div>
+            
+            <div id="error" class="error-card" style="display: none;">
+                <!-- Error message here -->
+            </div>
+        </main>
+        
+        <footer>
+            <p>Powered by Flask & Google Gemini AI</p>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('travelForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const loader = submitBtn.querySelector('.loader');
+            const resultsCard = document.getElementById('results');
+            const errorCard = document.getElementById('error');
+            
+            // Get form values
+            const budget = document.getElementById('budget').value;
+            const days = document.getElementById('days').value;
+            const type = document.getElementById('type').value;
+            
+            // UI Loading state
+            btnText.style.display = 'none';
+            loader.style.display = 'block';
+            submitBtn.disabled = true;
+            resultsCard.style.display = 'none';
+            errorCard.style.display = 'none';
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ budget, days, type })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Use marked.js to parse markdown from the AI
+                    resultsCard.innerHTML = marked.parse(data.result);
+                    resultsCard.style.display = 'block';
+                } else {
+                    errorCard.textContent = "Error: " + (data.error || "Failed to generate ideas.");
+                    errorCard.style.display = 'block';
+                }
+            } catch (err) {
+                errorCard.textContent = "Network Error. Please try again later.";
+                errorCard.style.display = 'block';
+            } finally {
+                // UI Reset
+                btnText.style.display = 'block';
+                loader.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
